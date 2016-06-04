@@ -45,6 +45,7 @@ LEARNING:
 
 import re, os, sys, math
 import json
+import time
 
 import yaml
 from scrapy.spider import Spider
@@ -73,9 +74,9 @@ class gsearch_url_form_class(object):
             TODO:
             #with different agent --randomize this
             #take care of situation where the catchpa come out
-            #may need to turn off personalize search pws = 0            
+            #may need to turn off personalize search pws = 0
         '''
-        
+
         if type(google_search_keyword) == str:
             self.g_search_key = google_search_keyword
             self.multiple_search_enabled = 0
@@ -98,11 +99,11 @@ class gsearch_url_form_class(object):
         self.data_format_switch = 1 # 1 - google site crawler, 2 - individual site crawler
 
         #storage of the various parameters
-        self.setting_json_file = r'c:\data\temp\google_search'
+        self.setting_json_file = r'google_search.tmp'
         self.spider_name = 'Search'
         self.sp_allowed_domain = ['www.google.com']
         self.sp_search_url_list = []#place to put the search results
-    
+
 
     def reformat_search_for_spaces(self):
         """
@@ -134,7 +135,7 @@ class gsearch_url_form_class(object):
         if self.search_results_num <1:
             print "search results specified is not valid."
             raise
-        
+
         self.pages_to_scan = int(math.ceil(self.search_results_num/100.0))
 
     def modify_search_key(self, purpose):
@@ -180,11 +181,11 @@ class gsearch_url_form_class(object):
             none --> str output_url_str
             set to tthe self.output_url_str and also return the string
             also set to self.sp_search_url_list
-            
+
         '''
         ## scan the number of results needed
         self.calculate_num_page_to_scan()
-        
+
         ## convert the input search result
         self.reformat_search_for_spaces()
 
@@ -194,7 +195,7 @@ class gsearch_url_form_class(object):
                                   self.postfix_of_search_text +\
                                   self.formed_page_num(n)
             self.sp_search_url_list.append(self.output_url_str)
-        
+
         return  self.sp_search_url_list
 
     ## !!!
@@ -203,7 +204,7 @@ class gsearch_url_form_class(object):
             Function to create multiple search url by querying a list of phrases.
             For running consecutive search
             Use the formed_search_url to create individual search and store them in list
-        
+
         '''
         temp_url_list = []
         ## get the individual url
@@ -218,12 +219,12 @@ class gsearch_url_form_class(object):
     def prepare_data_for_json_store(self,additonal_parm_dict = {}):
         '''
             orgainized the data set for storing (trigger by self.data_format_switch)
-            none, dict additonal_parm_dict --> dict 
+            none, dict additonal_parm_dict --> dict
             prepare a dict for read in to json --> a parameters to control the type of data input
             store and return as a dict
             additonal_parm_dict will add more user setting data to the data for storage
-            
-            inject a variable that differentiate between google search and other random website            
+
+            inject a variable that differentiate between google search and other random website
         '''
         if self.data_format_switch == 1:
             temp_data = {'Name':self.spider_name, 'Domain':self.sp_allowed_domain,
@@ -234,9 +235,9 @@ class gsearch_url_form_class(object):
                         'SearchUrl':self.sp_search_url_list,'type_of_parse':'general'}
         else:
             raise
-        
+
         temp_data.update(additonal_parm_dict)
-        return temp_data        
+        return temp_data
 
     def print_list_of_data_format_for_json(self):
         '''
@@ -283,7 +284,7 @@ if __name__ == '__main__':
     NUM_RESULTS_TO_PROCESS = 5 # specify the number of results url to crawl
 
     print 'Start search'
-    
+
     ## Parameters setting
     search_words = 'tokyo go'
     #search_words = ['best area to stay in tokyo','cheap place to stay in tokyo']
@@ -306,15 +307,15 @@ if __name__ == '__main__':
         hh.set_setting_to_json_file(temp_data_for_store)
         new_project_cmd = 'scrapy settings -s DEPTH_LIMIT=1 & cd "%s" & scrapy runspider %s & pause' %(spider_file_path,spider_filename)
         os.system(new_project_cmd)
-        
+
     ## Scape list of results link
     print 'Start scrape individual results'
     data  = hh.retrieved_setting_fr_json_file(GS_LINK_JSON_FILE)
-    
+
     ##check if proper url --> must at least start with http
     url_links_fr_search = [n for n in data['output_url'] if n.startswith('http')]
 
-    ## Switch to the second seach 
+    ## Switch to the second seach
     hh.data_format_switch = 2
 
     ## Optional limit the results displayed
@@ -328,10 +329,75 @@ if __name__ == '__main__':
     new_project_cmd = 'scrapy settings -s DEPTH_LIMIT=1 & cd "%s" & scrapy runspider %s  & pause' %(spider_file_path,spider_filename)
     os.system(new_project_cmd)
 
-    print 'Completed'    
+    print 'Completed'
 
+'''
+    Running the google search
 
+'''
+def GoogleSearch(search_words, NUM_SEARCH_RESULTS = 25, NUM_RESULTS_TO_PROCESS = 10):
+    tries = 0
+    while True:
+        try:
+            # User options
+            #NUM_SEARCH_RESULTS = 25    # number of search results returned
+            BYPASS_GOOGLE_SEARCH = 0    # if this is active, bypass searching
+            #NUM_RESULTS_TO_PROCESS = 10 # specify the number of results url to crawl
 
+            #print 'Start search'
 
+            ## Parameters setting
+            #search_words = 'tokyo go'
+            #search_words = ['best area to stay in tokyo','cheap place to stay in tokyo']
+            GS_LINK_JSON_FILE = r'output.tmp' #must be same as the get_google_link_results.py
 
+            # spider store location, depend on user input
+            spider_file_path = ''#r'C:\pythonuserfiles\google_search_module'
+            spider_filename = 'Get_google_link_results.py'
 
+            ## Google site link scrape
+            if not BYPASS_GOOGLE_SEARCH:
+                # print 'Get the google search results links'
+                hh = gsearch_url_form_class(search_words)
+                hh.set_num_of_search_results(NUM_SEARCH_RESULTS)
+                hh.data_format_switch = 1
+                hh.formed_search_url()
+
+                ## Set the setting for json
+                temp_data_for_store = hh.prepare_data_for_json_store()
+                hh.set_setting_to_json_file(temp_data_for_store)
+                new_project_cmd = 'scrapy settings -s DEPTH_LIMIT=1 && cd "%s" & scrapy runspider %s' %(spider_file_path,spider_filename)
+                os.system(new_project_cmd)
+
+            ## Scrape list of results link
+            #print 'Start scrape individual results'
+            data  = hh.retrieved_setting_fr_json_file(GS_LINK_JSON_FILE)
+            os.remove(GS_LINK_JSON_FILE)
+
+            ##check if proper url --> must at least start with http
+            url_links_fr_search = [n for n in data['output_url'] if n.startswith('http')]
+
+            limit = min(NUM_RESULTS_TO_PROCESS, len(url_links_fr_search))
+            return url_links_fr_search[:limit]
+        except:
+            tries += 1
+            if tries < 5:
+                time.sleep(1)
+            else:
+                return []
+
+    # ## Switch to the second seach
+    # hh.data_format_switch = 2
+    #
+    # ## Optional limit the results displayed
+    # hh.sp_search_url_list = url_links_fr_search[:NUM_RESULTS_TO_PROCESS]#keep the results to 10.Can be removed
+    #
+    # ## Set the setting for json
+    # temp_data_for_store = hh.prepare_data_for_json_store()
+    # hh.set_setting_to_json_file(temp_data_for_store)
+    #
+    # ## Run the crawler -- and remove the pause if do not wish to see contents of the command prompt
+    # new_project_cmd = 'scrapy settings -s DEPTH_LIMIT=1 & cd "%s" & scrapy runspider %s  & pause' %(spider_file_path,spider_filename)
+    # os.system(new_project_cmd)
+    #
+    # print 'Completed'

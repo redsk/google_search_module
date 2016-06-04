@@ -32,11 +32,11 @@ import string
 import yaml
 from scrapy.spider import Spider
 from scrapy.selector import Selector
-from Python_Google_Search import gsearch_url_form_class 
+from Python_Google_Search import gsearch_url_form_class
 
 # Options
-GS_LINK_JSON_FILE       = r'C:\data\temp\output'
-RESULT_FILE             = r'c:\data\temp\htmlread_1.txt'
+GS_LINK_JSON_FILE       = r'output.tmp'#C:\data\temp\output'
+RESULT_FILE             = r'htmlread_1.txt'
 
 ENABLE_TEXT_SUMMARIZE   = 0 # For NLTK to look into the text for details.
 ENABLE_PARAGRAPH_STORED = 1 # Store website content to file.
@@ -74,9 +74,9 @@ class GoogleSearch(Spider):
         '''
             Remove unnecessary white space such as \r,\t,\n
             str raw_input --> str
-            
+
         '''
-        
+
         for n in ['\n','\t','\r']:
             raw_input = raw_input.replace(n,'')
         return raw_input
@@ -87,7 +87,7 @@ class GoogleSearch(Spider):
             list more_url_list --> none
             get from Json file and eventually dump all back
         '''
-        
+
         with open(GS_LINK_JSON_FILE, "r") as outfile:
             setting_data = yaml.load(outfile)
 
@@ -97,7 +97,7 @@ class GoogleSearch(Spider):
 
         with open(GS_LINK_JSON_FILE, "w") as outfile:
             json.dump({'output_url': setting_data['output_url']+more_url_list}, outfile, indent=4)
-        
+
 
 
     def parse(self, response):
@@ -111,7 +111,7 @@ class GoogleSearch(Spider):
         if self.setting_data['type_of_parse'] == 'google_search':
             print
             print 'For google search parsing'
-            
+
             ## Get the selector for xpath parsing
             sel = Selector(response)
             google_search_links_list =  sel.xpath('//h3/a/@href').extract()
@@ -126,7 +126,7 @@ class GoogleSearch(Spider):
 
         if self.setting_data['type_of_parse'] == 'general':
 
-            print 
+            print
             print 'general website processing'
             sel = Selector(response)
 
@@ -143,11 +143,11 @@ class GoogleSearch(Spider):
                 para_str = self.join_list_of_str(paragraph_list, joined_chars= '..')
                 para_str = para_str.encode(errors='replace')
                 para_str = self.remove_whitespace_fr_raw(para_str)
-                
+
 
             print
             print title
-            print 
+            print
             print contents
 
             ## Dump results to text file
@@ -168,11 +168,3 @@ class GoogleSearch(Spider):
 
         print
         print 'Completed'
-
-
-
-
-
-
-
-
