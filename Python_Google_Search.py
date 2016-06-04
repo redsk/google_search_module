@@ -352,8 +352,9 @@ def GoogleSearch(search_words, NUM_SEARCH_RESULTS = 25, NUM_RESULTS_TO_PROCESS =
             GS_LINK_JSON_FILE = r'output.tmp' #must be same as the get_google_link_results.py
 
             # spider store location, depend on user input
-            spider_file_path = ''#r'C:\pythonuserfiles\google_search_module'
+            spider_file_path = os.path.dirname(os.path.realpath(__file__)) #r'C:\pythonuserfiles\google_search_module'
             spider_filename = 'Get_google_link_results.py'
+            spider_complete_path = os.path.join(spider_file_path, spider_filename)
 
             ## Google site link scrape
             if not BYPASS_GOOGLE_SEARCH:
@@ -366,7 +367,7 @@ def GoogleSearch(search_words, NUM_SEARCH_RESULTS = 25, NUM_RESULTS_TO_PROCESS =
                 ## Set the setting for json
                 temp_data_for_store = hh.prepare_data_for_json_store()
                 hh.set_setting_to_json_file(temp_data_for_store)
-                new_project_cmd = 'scrapy settings -s DEPTH_LIMIT=1 && cd "%s" & scrapy runspider %s' %(spider_file_path,spider_filename)
+                new_project_cmd = 'scrapy settings -s DEPTH_LIMIT=1 && scrapy runspider %s' %(spider_complete_path)
                 os.system(new_project_cmd)
 
             ## Scrape list of results link
