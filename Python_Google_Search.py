@@ -77,7 +77,7 @@ class gsearch_url_form_class(object):
             #may need to turn off personalize search pws = 0
         '''
 
-        if type(google_search_keyword) == str:
+        if type(google_search_keyword) in [str, unicode]:
             self.g_search_key = google_search_keyword
             self.multiple_search_enabled = 0
         elif type(google_search_keyword) == list:
@@ -85,7 +85,7 @@ class gsearch_url_form_class(object):
             self.g_search_key = ''
             self.multiple_search_enabled = 1
         else:
-            print 'google_search_keyword not of type str or list'
+            print 'google_search_keyword not of type str/unicode or list'
             raise
 
         ## user defined parameters
